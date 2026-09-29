@@ -1,12 +1,12 @@
-import os, sqlite3, json
+import os
 from dotenv import load_dotenv
 from api_requests import getChamps
-from dbFunctions import createDB, insertChamps
+from dbFunctions import createChampionshipTable, insertChamps
 
 load_dotenv()
 
 # Database set up
-createDB()
+createChampionshipTable()
 
 api_key = os.getenv("API_KEY")
 owcs_organizer = "f0e8a591-08fd-4619-9d59-d97f0571842e"
