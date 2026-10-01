@@ -15,7 +15,8 @@ def createChampionshipTable():
             type TEXT NOT NULL,
             region TEXT NOT NULL,
             players INTEGER NOT NULL,
-            start_date INTEGER NOT NULL
+            start_date INTEGER NOT NULL,
+            matches INTEGER
         )
     ''')
 
@@ -29,7 +30,7 @@ def createMatchesTable():
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS matches (
-            id UUID PRIMARY KEY UNIQUE,
+            id BLOB PRIMARY KEY UNIQUE,
             region TEXT NOT NULL,
             competition_type TEXT NOT NULL,
             competition_name TEXT NOT NULL,
@@ -41,7 +42,8 @@ def createMatchesTable():
             end_time INTEGER NOT NULL,
             best_of INTEGER NOT NULL,
             round INTEGER NOT NULL,
-            faceit_url TEXT NOT NULL UNIQUE
+            faceit_url TEXT NOT NULL UNIQUE,
+            champ_id UUID NOT NULL
         )
     ''')
 
@@ -84,7 +86,7 @@ def insertMatches(data):
     cursor = conn.cursor()
     
     cursor.executemany(
-       """INSERT OR IGNORE INTO matches (id, region, competition_type, competition_name, team_1_name, team_1_id, team_2_name, team_2_id, start_time, end_time, best_of, round, faceit_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+       """INSERT OR IGNORE INTO matches (id, region, competition_type, competition_name, team_1_name, team_1_id, team_2_name, team_2_id, start_time, end_time, best_of, round, faceit_url, champ_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         data
     )
     
