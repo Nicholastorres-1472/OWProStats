@@ -13,7 +13,7 @@ owcs_organizer = "f0e8a591-08fd-4619-9d59-d97f0571842e"
 
 
 champ_data = []
-limit = 20
+limit = 100
 offset = 0
 end = 0
 

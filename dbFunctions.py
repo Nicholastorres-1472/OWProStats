@@ -14,11 +14,11 @@ def createChampionshipTable():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS championships (
             champ_id BLOB,
-            name TEXT NOT NULL,
-            type TEXT NOT NULL,
-            region TEXT NOT NULL,
-            players INTEGER NOT NULL,
-            start_date INTEGER NOT NULL,
+            name TEXT,
+            type TEXT,
+            region TEXT,
+            players INTEGER,
+            start_date INTEGER,
             match_count INTEGER,
             PRIMARY KEY ("champ_id")
         ) WITHOUT ROWID
@@ -36,17 +36,17 @@ def createMatchesTable():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS matches (
             match_id BLOB,
-            region TEXT NOT NULL,
-            competition_type TEXT NOT NULL,
-            competition_name TEXT NOT NULL,
-            team_1_name TEXT NOT NULL,
+            region TEXT,
+            competition_type TEXT,
+            competition_name TEXT,
+            team_1_name TEXT,
             team_1_id BLOB NOT NULL,
-            team_2_name TEXT NOT NULL,
+            team_2_name TEXT,
             team_2_id BLOB NOT NULL,
             start_time INTEGER,
-            end_time INTEGER NOT NULL,
-            best_of INTEGER NOT NULL,
-            round INTEGER NOT NULL,
+            end_time INTEGER,
+            best_of INTEGER,
+            round INTEGER,
             champ_id BLOB NOT NULL,
             PRIMARY KEY ("match_id"),
             FOREIGN KEY("champ_id") REFERENCES "championships"("champ_id") ON DELETE CASCADE
@@ -101,6 +101,10 @@ def createMaps_teams_statsTable():
         )
     ''')
     
+    conn.commit()
+
+    conn.close()
+    
 def createMaps_player_statsTable():
     conn = sqlite3.connect(URL)
     
@@ -126,6 +130,35 @@ def createMaps_player_statsTable():
             FOREIGN KEY("map_id") REFERENCES "maps"("map_id") ON DELETE CASCADE
         )
     ''')
+    
+    conn.commit()
+
+    conn.close()
+    
+def createPlayersTable():
+    conn = sqlite3.connect(URL)
+    
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+            CREATE TABLE "players" (
+                "player_id"	BLOB UNIQUE,
+                "name"	TEXT,
+                "mit"	INTEGER,
+                "deaths"	INTEGER,
+                "assists"	INTEGER,
+                "elims"	INTEGER,
+                "kd"	INTEGER,
+                "dmg_dealt"	INTEGER,
+                "healing"	INTEGER,
+                "role"	TEXT,
+                PRIMARY KEY("player_id")
+            )
+        ''')
+    
+    conn.commit()
+
+    conn.close()
  
 #  INSERT FUNCTIONS 
 def insertChamps(data):
@@ -155,6 +188,8 @@ def insertMatches(data):
     
     cursor = conn.cursor()
     
+    preInsertion = len(data)
+    
     cursor.executemany(
        """INSERT OR IGNORE INTO matches (
             match_id,
@@ -176,12 +211,23 @@ def insertMatches(data):
     )
     
     conn.commit()
+    
+    postInsertion = cursor.rowcount
+    missingRows = preInsertion - postInsertion
     conn.close()
+    
+    if(missingRows > 0):
+        print(data[0][12])
+        print(f"len Data: {len(data)}")
+        print(f"preinsert: {preInsertion}")
+        print(f"postinsertion: {postInsertion}")
+        print(f"Missing rows: {missingRows}")
+    
+    return (missingRows)
     
     
 # GET FUNCTIONS
 def getChampId():
-
     conn = sqlite3.connect(URL)
 
     cursor = conn.cursor()
@@ -193,3 +239,28 @@ def getChampId():
     conn.close()
 
     return data
+
+# EXIST FUNCTIONS 
+
+def exist(table, column, value):
+    conn = sqlite3.connect(URL)
+    
+    cursor = conn.cursor()
+    
+    query = f"""
+    SELECT EXISTS (
+        SELECT 1
+        FROM {table}
+        WHERE {column} = ?
+    );
+    """
+    
+    try:
+        cursor.execute(query, (value,))
+        
+        result = cursor.fetchone()[0]
+        
+        return bool(result)
+    
+    finally:
+        conn.close
