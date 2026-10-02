@@ -11,17 +11,24 @@ createChampionshipTable()
 api_key = os.getenv("API_KEY")
 owcs_organizer = "f0e8a591-08fd-4619-9d59-d97f0571842e"
 
-try:
-    data = getChamps(api_key, owcs_organizer).json()
-except:
-    print("API call failed.")
 
 champ_data = []
+limit = 20
+offset = 0
+end = 0
 
+while True:
+    data = getChamps(api_key, owcs_organizer, offset, limit).json()
 
-for item in data.get("items"):
-    item_tuple = (item["name"], item["championship_id"], item["type"], item["region"], item["current_subscriptions"], item["championship_start"])
-    item
-    champ_data.append(item_tuple)
+    itemCount = len(data.get("items"))
+    for item in data.get("items"):
+        item_tuple = (item["name"], item["championship_id"], item["type"], item["region"], item["current_subscriptions"], item["championship_start"])
+        item
+        champ_data.append(item_tuple)
+        
+    insertChamps(champ_data)
     
-insertChamps(champ_data)
+    if (itemCount < (limit)):
+        break
+    else:
+        offset += limit

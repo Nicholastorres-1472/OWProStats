@@ -1,6 +1,6 @@
 import requests
 
-def getChamps(api_key, organizer_id):
+def getChamps(api_key, organizer_id, offset, limit):
     url = f"https://open.faceit.com/data/v4/organizers/{organizer_id}/championships"
 
     headers = {
@@ -9,7 +9,9 @@ def getChamps(api_key, organizer_id):
     }
     
     query_params = {
-        "limit": 100
+        "limit": limit,
+        "offset": offset,
+        "publishedOnly": False
     }
     response = requests.get(url, headers=headers, params=query_params)
     

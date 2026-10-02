@@ -1,6 +1,9 @@
-import sqlite3
+import sqlite3, os 
+from dotenv import load_dotenv
 
-URL = "Prostats_test.db"
+load_dotenv()
+
+URL = os.getenv("DB_URL")
 
 # DATABASE SETUP
 def createChampionshipTable():
@@ -10,15 +13,15 @@ def createChampionshipTable():
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS championships (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            champ_id BLOB,
             name TEXT NOT NULL,
-            champ_id TEXT NOT NULL UNIQUE,
             type TEXT NOT NULL,
             region TEXT NOT NULL,
             players INTEGER NOT NULL,
             start_date INTEGER NOT NULL,
-            match_count INTEGER
-        )
+            match_count INTEGER,
+            PRIMARY KEY ("champ_id")
+        ) WITHOUT ROWID
     ''')
 
     conn.commit()
@@ -32,21 +35,22 @@ def createMatchesTable():
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS matches (
-            id BLOB PRIMARY KEY UNIQUE,
+            match_id BLOB,
             region TEXT NOT NULL,
             competition_type TEXT NOT NULL,
             competition_name TEXT NOT NULL,
             team_1_name TEXT NOT NULL,
-            team_1_id UUID NOT NULL,
+            team_1_id BLOB NOT NULL,
             team_2_name TEXT NOT NULL,
-            team_2_id UUID NOT NULL,
+            team_2_id BLOB NOT NULL,
             start_time INTEGER,
             end_time INTEGER NOT NULL,
             best_of INTEGER NOT NULL,
             round INTEGER NOT NULL,
-            faceit_url TEXT NOT NULL UNIQUE,
-            champ_id UUID NOT NULL
-        )
+            champ_id BLOB NOT NULL,
+            PRIMARY KEY ("match_id"),
+            FOREIGN KEY("champ_id") REFERENCES "championships"("champ_id") ON DELETE CASCADE
+        ) WITHOUT ROWID
     ''')
 
     conn.commit()
@@ -60,12 +64,13 @@ def createMapsTable():
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS maps (
-            map_id BLOB PRIMARY KEY UNIQUE,
-            match_id TEXT NOT NULL,
+            map_id INTEGER,
+            match_id BLOB NOT NULL,
             round_number INTEGER NOT NULL,
             map_name TEXT,
+            PRIMARY KEY ("map_id" AUTOINCREMENT),
             UNIQUE("match_id","round_number"),
-	        FOREIGN KEY("match_id") REFERENCES "matches"("id") ON DELETE CASCADE
+	        FOREIGN KEY("match_id") REFERENCES "matches"("match_id") ON DELETE CASCADE
         )
     ''')
 
@@ -79,10 +84,10 @@ def createMaps_teams_statsTable():
     cursor = conn.cursor()
 
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS maps_teams_stats (
-            map_team_id INTEGER PRIMARY KEY UNIQUE,
+        CREATE TABLE IF NOT EXISTS map_teams_stats (
+            map_team_id INTEGER,
             map_id INTEGER NOT NULL,
-            team_id INTEGER NOT NULL,
+            team_id BLOB NOT NULL,
             score INTEGER NOT NULL,
             result INTEGER NOT NULL,
             avg_elims INTEGER,
@@ -91,6 +96,7 @@ def createMaps_teams_statsTable():
             total_deaths INTEGER,
             total_elims INTEGER,
             UNIQUE("map_id","team_id"),
+            PRIMARY KEY ("map_team_id" AUTOINCREMENT),
             FOREIGN KEY("map_id") REFERENCES "maps"("map_id") ON DELETE CASCADE
         )
     ''')
@@ -101,11 +107,11 @@ def createMaps_player_statsTable():
     cursor = conn.cursor()
 
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS maps_player_stats (
-            map_player_id INTEGER PRIMARY KEY UNIQUE,
+        CREATE TABLE IF NOT EXISTS map_player_stats (
+            map_player_id INTEGER,
             map_id INTEGER NOT NULL,
-            team_id INTEGER NOT NULL,
-            player_id TEXT NOT NULL,
+            team_id BLOB NOT NULL,
+            player_id BLOB NOT NULL,
             name TEXT,
             mit INTEGER,
             deaths INTEGER,
@@ -116,10 +122,11 @@ def createMaps_player_statsTable():
             healing INTEGER,
             role TEXT,
             UNIQUE("map_id","player_id"),
+            PRIMARY KEY ("map_player_id" AUTOINCREMENT),
             FOREIGN KEY("map_id") REFERENCES "maps"("map_id") ON DELETE CASCADE
         )
     ''')
-   
+ 
 #  INSERT FUNCTIONS 
 def insertChamps(data):
 
@@ -128,7 +135,14 @@ def insertChamps(data):
     cursor = conn.cursor()
     
     cursor.executemany(
-       """INSERT OR IGNORE INTO championships (name, champ_id, type, region, players, start_date) VALUES (?, ?, ?, ?, ?, ?)""",
+       """INSERT OR IGNORE INTO championships (
+           name,
+           champ_id,
+           type,
+           region,
+           players,
+           start_date
+        ) VALUES (?, ?, ?, ?, ?, ?)""",
         data
     )
     
@@ -142,7 +156,22 @@ def insertMatches(data):
     cursor = conn.cursor()
     
     cursor.executemany(
-       """INSERT OR IGNORE INTO matches (id, region, competition_type, competition_name, team_1_name, team_1_id, team_2_name, team_2_id, start_time, end_time, best_of, round, faceit_url, champ_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+       """INSERT OR IGNORE INTO matches (
+            match_id,
+            region,
+            competition_type,
+            competition_name,
+            team_1_name,
+            team_1_id,
+            team_2_name,
+            team_2_id,
+            start_time,
+            end_time,
+            best_of,
+            round,
+            champ_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         data
     )
     
